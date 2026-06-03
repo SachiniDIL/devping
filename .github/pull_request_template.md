@@ -18,8 +18,8 @@ Closes #<!-- issue number -->
 
 <!-- Steps to manually verify this works -->
 
-1. 
-2. 
+1.
+2.
 
 ---
 
