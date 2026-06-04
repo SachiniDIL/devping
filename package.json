@@ -11,7 +11,8 @@
     "format:check": "prettier --check .",
     "prepare": "husky",
     "test": "jest --watch",
-    "test:ci": "jest --ci --coverage"
+    "test:ci": "jest --ci --coverage",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "next": "16.2.7",
