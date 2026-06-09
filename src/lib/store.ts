@@ -15,6 +15,8 @@ export function addSite(name: string, url: string): Site {
     name,
     url,
     status: 'PENDING',
+    lastChecked: null,
+    responseTime: null,
   };
   const sites = getSites();
   sites.push(newSite);
