@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     updateSiteStatus(id, status, responseTime);
     const updatedSite = getSites().find((site) => site.id === id);
     return new Response(JSON.stringify(updatedSite), { status: 200 });
-  } catch (error) {
+  } catch {
     updateSiteStatus(id, 'DOWN', 0);
     const updatedSite = getSites().find((site) => site.id === id);
     return new Response(JSON.stringify(updatedSite), { status: 200 });
