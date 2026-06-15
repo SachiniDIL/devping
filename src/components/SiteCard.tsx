@@ -7,9 +7,10 @@ import StatusBadge from './StatusBadge';
 type SiteCardProps = {
   site: Site;
   onDelete: (id: string) => void;
+  onPing: (id: string, url: string) => void;
 };
 
-const SiteCard: React.FC<SiteCardProps> = ({ site, onDelete }) => {
+const SiteCard: React.FC<SiteCardProps> = ({ site, onDelete, onPing }) => {
   return (
     <div className="bg-white shadow-md rounded-lg p-4 flex flex-col justify-between">
       <div className="mb-4 flex items-center justify-between">
@@ -32,6 +33,12 @@ const SiteCard: React.FC<SiteCardProps> = ({ site, onDelete }) => {
         </p>
       </div>
 
+      <button
+        onClick={() => onPing(site.id, site.url)}
+        className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition-colors"
+      >
+        Ping
+      </button>
       <button
         onClick={() => onDelete(site.id)}
         className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-colors"
