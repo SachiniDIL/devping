@@ -8,7 +8,11 @@ import SiteCard from '@/components/SiteCard';
 export default function Home() {
   const queryClient = useQueryClient();
 
-  const { data: sites = [], isLoading } = useQuery({
+  const {
+    data: sites = [],
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['sites'],
     queryFn: () => fetch('/api/sites').then((res) => res.json()),
     refetchInterval: 30000,
@@ -111,6 +115,11 @@ export default function Home() {
               </span>
             )}
           </h2>
+          {isError && (
+            <div className="text-center py-8" style={{ color: 'var(--muted)' }}>
+              <p className="text-sm">Error loading sites.</p>
+            </div>
+          )}
           {isLoading && (
             <div
               className="flex items-center gap-2 py-8 justify-center"
