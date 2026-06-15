@@ -15,38 +15,87 @@ describe('SiteCard', () => {
 
   it('renders site information correctly', () => {
     const onDelete = jest.fn();
-    render(<SiteCard site={mockSite} onDelete={onDelete} />);
+    const onPing = jest.fn();
+    render(<SiteCard site={mockSite} onDelete={onDelete} onPing={onPing} />);
     expect(screen.getByText('Test Site')).toBeInTheDocument();
     expect(screen.getByText('https://testsite.com')).toBeInTheDocument();
-    expect(screen.getByText(/Last Checked:/)).toBeInTheDocument();
-    expect(screen.getByText('Response Time: 120ms')).toBeInTheDocument();
+    expect(screen.getByText('Last checked:')).toBeInTheDocument();
+    expect(screen.getByText('Response:').parentElement?.textContent).toBe(
+      'Response: 120ms'
+    );
   });
 
   it('calls onDelete when delete button is clicked', async () => {
     const onDelete = jest.fn();
-    render(<SiteCard site={mockSite} onDelete={onDelete} />);
+    const onPing = jest.fn();
+    render(<SiteCard site={mockSite} onDelete={onDelete} onPing={onPing} />);
     const user = userEvent.setup();
     await user.click(screen.getByRole('button', { name: /delete/i }));
     expect(onDelete).toHaveBeenCalledWith('1');
   });
 
-  it('displays "Never Checked" when lastChecked is null', () => {
+  it('displays "Never" when lastChecked is null', () => {
     const siteWithoutLastChecked: Site = { ...mockSite, lastChecked: null };
     const onDelete = jest.fn();
-    render(<SiteCard site={siteWithoutLastChecked} onDelete={onDelete} />);
-    expect(screen.getByText('Last Checked: Never Checked')).toBeInTheDocument();
+    const onPing = jest.fn();
+    render(
+      <SiteCard
+        site={siteWithoutLastChecked}
+        onDelete={onDelete}
+        onPing={onPing}
+      />
+    );
+    expect(screen.getByText('Last checked:').parentElement?.textContent).toBe(
+      'Last checked: Never'
+    );
   });
 
-  it('displays "-" when responseTime is null', () => {
+  it('displays "—" when responseTime is null', () => {
     const siteWithoutResponseTime: Site = { ...mockSite, responseTime: null };
     const onDelete = jest.fn();
-    render(<SiteCard site={siteWithoutResponseTime} onDelete={onDelete} />);
-    expect(screen.getByText('Response Time: -')).toBeInTheDocument();
+    const onPing = jest.fn();
+    render(
+      <SiteCard
+        site={siteWithoutResponseTime}
+        onDelete={onDelete}
+        onPing={onPing}
+      />
+    );
+    expect(screen.getByText('Response:').parentElement?.textContent).toBe(
+      'Response: —'
+    );
   });
 
   it('renders StatusBadge with correct status', () => {
     const onDelete = jest.fn();
-    render(<SiteCard site={mockSite} onDelete={onDelete} />);
+    const onPing = jest.fn();
+    render(<SiteCard site={mockSite} onDelete={onDelete} onPing={onPing} />);
     expect(screen.getByText('UP')).toBeInTheDocument();
+  });
+
+  it('calls onPing when ping button is clicked', async () => {
+    const onDelete = jest.fn();
+    const onPing = jest.fn();
+    render(<SiteCard site={mockSite} onDelete={onDelete} onPing={onPing} />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: /ping/i }));
+    expect(onPing).toHaveBeenCalledWith('1', 'https://testsite.com');
+  });
+
+  it('renders with correct styles', () => {
+    const onDelete = jest.fn();
+    const onPing = jest.fn();
+    const { container } = render(
+      <SiteCard site={mockSite} onDelete={onDelete} onPing={onPing} />
+    );
+    const card = container.firstChild;
+    expect(card).toHaveClass('rounded-xl');
+    expect(card).toHaveClass('p-5');
+    expect(card).toHaveClass('flex');
+    expect(card).toHaveClass('flex-col');
+    expect(card).toHaveClass('gap-4');
+    expect(card).toHaveClass('border');
+    expect(card).toHaveClass('transition-shadow');
+    expect(card).toHaveClass('hover:shadow-md');
   });
 });

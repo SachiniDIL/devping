@@ -1,63 +1,145 @@
-import Image from 'next/image';
+'use client';
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import AddSiteForm from '@/components/AddSiteForm';
+import { Site } from '@/lib/types';
+import SiteCard from '@/components/SiteCard';
 
 export default function Home() {
+  const queryClient = useQueryClient();
+
+  const { data: sites = [], isLoading } = useQuery({
+    queryKey: ['sites'],
+    queryFn: () => fetch('/api/sites').then((res) => res.json()),
+    refetchInterval: 30000,
+  });
+
+  const addMutation = useMutation({
+    mutationFn: (data: { name: string; url: string }) =>
+      fetch('/api/sites', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      }).then((res) => res.json()),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sites'] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) =>
+      fetch(`/api/sites/${id}`, {
+        method: 'DELETE',
+      }),
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ['sites'] });
+      const previousSites = queryClient.getQueryData<Site[]>(['sites']);
+      queryClient.setQueryData<Site[]>(['sites'], (old) =>
+        old ? old.filter((site) => site.id !== id) : []
+      );
+      return { previousSites };
+    },
+    onError: (err, id, context) => {
+      if (context?.previousSites) {
+        queryClient.setQueryData<Site[]>(['sites'], context.previousSites);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['sites'] });
+    },
+  });
+
+  const pingMutation = useMutation({
+    mutationFn: (data: { id: string; url: string }) =>
+      fetch(`/api/ping`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      }).then((res) => res.json()),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sites'] }),
+  });
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-gray-600 font-sans ">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{' '}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="min-h-screen" style={{ background: 'var(--background)' }}>
+      <header
+        className="border-b"
+        style={{ borderColor: 'var(--border)', background: 'var(--card)' }}
+      >
+        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center gap-3">
+          <span className="text-2xl">📡</span>
+          <div>
+            <h1
+              className="text-xl font-bold leading-none"
+              style={{ color: 'var(--foreground)' }}
             >
-              Templates
-            </a>{' '}
-            or the{' '}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{' '}
-            center.
-          </p>
+              DevPing
+            </h1>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--muted)' }}>
+              Site uptime monitor
+            </p>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      </header>
+
+      <main className="max-w-3xl mx-auto px-6 py-8">
+        <div className="mb-8">
+          <h2
+            className="text-sm font-semibold uppercase tracking-wider mb-4"
+            style={{ color: 'var(--muted)' }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            Add a site
+          </h2>
+          <AddSiteForm
+            onSubmit={(name, url) => addMutation.mutate({ name, url })}
+          />
+        </div>
+
+        <div>
+          <h2
+            className="text-sm font-semibold uppercase tracking-wider mb-4"
+            style={{ color: 'var(--muted)' }}
           >
-            Documentation
-          </a>
+            Monitored Sites
+            {sites.length > 0 && (
+              <span
+                className="ml-2 font-normal normal-case text-xs px-2 py-0.5 rounded-full"
+                style={{ background: 'var(--border)', color: 'var(--muted)' }}
+              >
+                {sites.length}
+              </span>
+            )}
+          </h2>
+          {isLoading && (
+            <div
+              className="flex items-center gap-2 py-8 justify-center"
+              style={{ color: 'var(--muted)' }}
+            >
+              <span className="inline-block w-4 h-4 border-2 rounded-full border-current border-t-transparent animate-spin" />
+              <span className="text-sm">Loading sites…</span>
+            </div>
+          )}
+          {!isLoading && sites.length === 0 && (
+            <div
+              className="text-center py-16 rounded-xl border-2 border-dashed"
+              style={{ borderColor: 'var(--border)', color: 'var(--muted)' }}
+            >
+              <p className="text-sm">
+                No sites yet. Add one above to start monitoring.
+              </p>
+            </div>
+          )}
+          <div className="flex flex-col gap-3">
+            {sites.map((site: Site) => (
+              <SiteCard
+                key={site.id}
+                site={site}
+                onDelete={(id) => deleteMutation.mutate(id)}
+                onPing={(id, url) => pingMutation.mutate({ id, url })}
+              />
+            ))}
+          </div>
         </div>
       </main>
     </div>
